@@ -389,11 +389,11 @@ const Interface::FunctionInfo FunctionTable[] = {
 // Interface class
 
 Interface::Interface() {
-    Register(FunctionTable, ARRAY_SIZE(FunctionTable));
-
-    g_interrupt_event = 0;
-    g_shared_memory = 0;
+    g_interrupt_event = Kernel::Event::Create(RESETTYPE_ONESHOT, "GSP_GPU:g_interrupt_event").MoveFrom();
+    g_shared_memory = Kernel::SharedMemory::Create("GSP_GPU:g_shared_memory").MoveFrom();
     g_thread_id = 1;
+
+    Register(FunctionTable, ARRAY_SIZE(FunctionTable));
 }
 
 } // namespace
