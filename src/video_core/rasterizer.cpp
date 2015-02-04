@@ -472,6 +472,50 @@ void ProcessTriangle(const VertexShader::OutputVertex& v0,
                     continue;
             }
 
+            if (registers.output_merger.stencil_test.enable) {
+                bool pass = false;
+
+                auto& stencil = registers.output_merger.stencil_test.mask;
+                auto ref = registers.output_merger.stencil_test.ref & registers.output_merger.stencil_test.mask;
+
+                switch (registers.output_merger.stencil_test.func) {
+                case registers.output_merger.Never:
+                    pass = false;
+                    break;
+
+                case registers.output_merger.Always:
+                    pass = true;
+                    break;
+
+                case registers.output_merger.Equal:
+                    pass = stencil == ref;
+                    break;
+
+                case registers.output_merger.NotEqual:
+                    pass = stencil != ref;
+                    break;
+
+                case registers.output_merger.LessThan:
+                    pass = stencil < ref;
+                    break;
+
+                case registers.output_merger.LessThanOrEqual:
+                    pass = stencil <= ref;
+                    break;
+
+                case registers.output_merger.GreaterThan:
+                    pass = stencil > ref;
+                    break;
+
+                case registers.output_merger.GreaterThanOrEqual:
+                    pass = stencil >= ref;
+                    break;
+                }
+
+                if (!pass)
+                    continue;
+            }
+
             // TODO: Does depth indeed only get written even if depth testing is enabled?
             if (registers.output_merger.depth_test_enable) {
                 u16 z = (u16)(-(v0.screenpos[2].ToFloat32() * w0 +

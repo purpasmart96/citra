@@ -365,7 +365,15 @@ struct Regs {
             BitField< 8, 8, u32> ref;
         } alpha_test;
 
-        INSERT_PADDING_WORDS(0x2);
+        INSERT_PADDING_WORDS(0x1);
+
+        union {
+            BitField<  0, 1, u32> enable;
+            BitField<  4, 3, CompareFunc> func;
+            BitField<  8, 8, u32> replace;
+            BitField< 16, 8, u32> ref;
+            BitField< 24, 8, u32> mask;
+        } stencil_test;
 
         union {
             BitField< 0, 1, u32> depth_test_enable;
