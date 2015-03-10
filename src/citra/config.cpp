@@ -65,6 +65,7 @@ void Config::ReadValues() {
     // Core
     Settings::values.gpu_refresh_rate = glfw_config->GetInteger("Core", "gpu_refresh_rate", 30);
     Settings::values.frame_skip = glfw_config->GetInteger("Core", "frame_skip", 0);
+    Settings::values.gfx_backend = glfw_config->Get("Core", "gfx_backend", "OGL");
 
     // Renderer
     Settings::values.bg_red   = (float)glfw_config->GetReal("Renderer", "bg_red",   1.0);
