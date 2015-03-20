@@ -53,9 +53,9 @@ static inline void WritePicaReg(u32 id, u32 value, u32 mask) {
             GSP_GPU::SignalInterrupt(GSP_GPU::InterruptId::P3D);
             return;
 
-        // It seems like these trigger vertex rendering
-        case PICA_REG_INDEX(trigger_draw):
-        case PICA_REG_INDEX(trigger_draw_indexed):
+        // These trigger the usage of arrays and elements
+        case PICA_REG_INDEX(draw_arrays):
+        case PICA_REG_INDEX(draw_elements):
         {
             Common::Profiling::ScopeTimer scope_timer(category_drawing);
 
@@ -98,7 +98,7 @@ static inline void WritePicaReg(u32 id, u32 value, u32 mask) {
             }
 
             // Load vertices
-            bool is_indexed = (id == PICA_REG_INDEX(trigger_draw_indexed));
+            bool is_indexed = (id == PICA_REG_INDEX(draw_elements));
 
             const auto& index_info = registers.index_array;
             const u8* index_address_8 = Memory::GetPointer(PAddrToVAddr(base_address + index_info.offset));
