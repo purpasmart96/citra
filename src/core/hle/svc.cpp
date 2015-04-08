@@ -39,6 +39,10 @@ const ResultCode ERR_PORT_NAME_TOO_LONG(ErrorDescription(30), ErrorModule::OS,
 /// An invalid result code that is meant to be overwritten when a thread resumes from waiting
 const ResultCode RESULT_INVALID(0xDEADC0DE);
 
+const ResultCode RESULT_INVALID_PROCCES_TYPE_VALUE(0xD8E007ED);
+
+const ResultCode RESULT_INVALID_PROCCES_TYPE_VALUE2(0xE0E01BF4);
+
 enum ControlMemoryOperation {
     MEMORY_OPERATION_HEAP       = 0x00000003,
     MEMORY_OPERATION_GSP_HEAP   = 0x00010003,
@@ -286,6 +290,29 @@ static ResultCode ArbitrateAddress(Handle handle, u32 address, u32 type, u32 val
     return arbiter->ArbitrateAddress(static_cast<Kernel::ArbitrationType>(type),
             address, value, nanoseconds);
 }
+
+static void Break(u32 break_reason) {
+
+    switch (break_reason) {
+
+    case PANIC:
+        LOG_CRITICAL(Kernel_SVC, "called break reason was (PANIC)(%u)", break_reason);
+        break;
+
+    case ASSERT:
+        LOG_CRITICAL(Kernel_SVC, "called break reason was (ASSERT)(%u)", break_reason);
+        break;
+
+    case USER:
+        LOG_CRITICAL(Kernel_SVC, "called break reason was (USER)(%u)", break_reason);
+        break;
+
+    default:
+        LOG_CRITICAL(Kernel_SVC, "called unknown break reason was %u", break_reason);
+    }
+
+}
+
 
 /// Used to output a message on a debug hardware unit - does nothing on a retail unit
 static void OutputDebugString(const char* string) {
@@ -568,6 +595,42 @@ static ResultCode CreateMemoryBlock(Handle* out_handle, u32 addr, u32 size, u32 
     return RESULT_SUCCESS;
 }
 
+static ResultCode GetProcessInfo(s64* out, Handle handle, u32 type) {
+
+    switch (type) {
+
+    case 9:
+    case 10:
+    case 11:
+    case 12:
+    case 13:
+    case 14:
+    case 15:
+    case 16:
+    case 17:
+    case 18:
+    case 19:
+        return RESULT_INVALID_PROCCES_TYPE_VALUE;
+        break;
+
+    case 20:
+        return RESULT_SUCCESS;
+        break;
+
+    case 21:
+    case 22:
+    case 23:
+        return RESULT_INVALID_PROCCES_TYPE_VALUE2;
+        break;
+
+    // Unknown Process type
+    default:
+        LOG_ERROR(Kernel_SVC, "called unknown process type %u", type);
+    }
+
+    return RESULT_SUCCESS;
+}
+
 const HLE::FunctionDef SVC_Table[] = {
     {0x00, nullptr,                         "Unknown"},
     {0x01, HLE::Wrap<ControlMemory>,        "ControlMemory"},
@@ -612,7 +675,7 @@ const HLE::FunctionDef SVC_Table[] = {
     {0x28, HLE::Wrap<GetSystemTick>,        "GetSystemTick"},
     {0x29, nullptr,                         "GetHandleInfo"},
     {0x2A, nullptr,                         "GetSystemInfo"},
-    {0x2B, nullptr,                         "GetProcessInfo"},
+    {0x2B, HLE::Wrap<GetProcessInfo>,       "GetProcessInfo"},
     {0x2C, nullptr,                         "GetThreadInfo"},
     {0x2D, HLE::Wrap<ConnectToPort>,        "ConnectToPort"},
     {0x2E, nullptr,                         "SendSyncRequest1"},
@@ -629,7 +692,7 @@ const HLE::FunctionDef SVC_Table[] = {
     {0x39, nullptr,                         "GetResourceLimitLimitValues"},
     {0x3A, HLE::Wrap<GetResourceLimitCurrentValues>, "GetResourceLimitCurrentValues"},
     {0x3B, nullptr,                         "GetThreadContext"},
-    {0x3C, nullptr,                         "Break"},
+    {0x3C, HLE::Wrap<Break>,                "Break"},
     {0x3D, HLE::Wrap<OutputDebugString>,    "OutputDebugString"},
     {0x3E, nullptr,                         "ControlPerformanceCounter"},
     {0x3F, nullptr,                         "Unknown"},

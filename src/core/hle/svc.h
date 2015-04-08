@@ -9,11 +9,26 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // SVC types
 
+enum MemoryState {
+    FREE,
+    RESERVED,
+    IO,
+    STATIC,
+    CODE,
+    PRIVATE,
+    SHARED,
+    CONTINUOUS,
+    ALIASED,
+    ALIAS,
+    ALIAS_CODE,
+    LOCKED,
+};
+
 struct MemoryInfo {
     u32 base_address;
     u32 size;
     u32 permission;
-    u32 state;
+    MemoryState state;
 };
 
 struct PageInfo {
@@ -25,6 +40,12 @@ enum ResetType {
     RESETTYPE_STICKY,
     RESETTYPE_PULSE,
     RESETTYPE_MAX_BIT = (1u << 31),
+};
+
+enum BreakReason {
+    PANIC       = 0,
+    ASSERT      = 1,
+    USER        = 2,
 };
 
 enum ArbitrationType {
