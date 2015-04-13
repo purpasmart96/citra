@@ -282,6 +282,24 @@ std::string PICAInstrToGLSL(nihstro::Instruction instr, const u32* swizzle_data)
             break;
         }
 
+        case nihstro::OpCode::Id::EX2:
+        {    
+            instr_text += dst;
+            instr_text += " = exp2(";
+            instr_text += src1;
+            instr_text += ");\n";
+            break;
+        }
+
+        case nihstro::OpCode::Id::LG2:
+        {    
+            instr_text += dst;
+            instr_text += " = log2(";
+            instr_text += src1;
+            instr_text += ");\n";
+            break;
+        }
+
         case nihstro::OpCode::Id::MUL:
         {
             instr_text += dst;
@@ -290,6 +308,28 @@ std::string PICAInstrToGLSL(nihstro::Instruction instr, const u32* swizzle_data)
             instr_text += " * ";
             instr_text += src2;
             instr_text += ";\n";
+            break;
+        }
+
+        case nihstro::OpCode::Id::SGE:
+        {
+            instr_text += "if (";
+            instr_text += src1;
+            instr_text += ") >= (";
+            instr_text += src1;
+            instr_text += ") ";
+            instr_text += dst;
+            instr_text += " = 1.0 ";
+            instr_text += ";\n";
+            break;
+        }
+
+        case nihstro::OpCode::Id::FLR:
+        {    
+            instr_text += dst;
+            instr_text += " = floor(";
+            instr_text += src1;
+            instr_text += ");\n";
             break;
         }
 

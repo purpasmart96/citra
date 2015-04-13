@@ -37,7 +37,6 @@ struct Values {
     // Core
     int gpu_refresh_rate;
     int frame_skip;
-    std::string gfx_backend;
 
     // Data Storage
     bool use_virtual_sd;
@@ -46,6 +45,9 @@ struct Values {
     int region_value;
 
     // Renderer
+    bool use_hw_renderer;
+    bool use_hw_shaders;
+
     float bg_red;
     float bg_green;
     float bg_blue;

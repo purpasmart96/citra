@@ -112,12 +112,12 @@ struct Regs {
     struct TextureConfig {
         enum WrapMode : u32 {
             ClampToEdge    = 0,
-            ClampToBorder  = 1, // TODO: Check if that is right
+            ClampToBorder  = 1,
             Repeat         = 2,
             MirroredRepeat = 3,
         };
 
-        INSERT_PADDING_WORDS(0x1);
+        u32 border_color;
 
         union {
             BitField< 0, 16, u32> height;
@@ -132,7 +132,7 @@ struct Regs {
             BitField<12, 2, WrapMode> wrap_t;
         };
 
-        INSERT_PADDING_WORDS(0x1);
+        u32 texture_lod;
 
         u32 address;
 
@@ -405,7 +405,9 @@ struct Regs {
             BitField<24, 8, u32> stencil_mask;
         } stencil_test;
 
-        INSERT_PADDING_WORDS(0x1);
+        union {
+            BitField< 0, 24, u32> value;
+        } stencil_op;
 
         union {
             BitField< 0, 1, u32> depth_test_enable;

@@ -51,10 +51,12 @@ void Config::ReadValues() {
     qt_config->beginGroup("Core");
     Settings::values.gpu_refresh_rate = qt_config->value("gpu_refresh_rate", 30).toInt();
     Settings::values.frame_skip = qt_config->value("frame_skip", 0).toInt();
-    Settings::values.gfx_backend = qt_config->value("gfx_backend", "OGL").toString().toStdString();
     qt_config->endGroup();
 
     qt_config->beginGroup("Renderer");
+    Settings::values.use_hw_renderer = qt_config->value("use_hw_renderer", false).toBool();
+    Settings::values.use_hw_shaders = qt_config->value("use_hw_shaders", false).toBool();
+
     Settings::values.bg_red   = qt_config->value("bg_red",   1.0).toFloat();
     Settings::values.bg_green = qt_config->value("bg_green", 1.0).toFloat();
     Settings::values.bg_blue  = qt_config->value("bg_blue",  1.0).toFloat();
@@ -103,10 +105,12 @@ void Config::SaveValues() {
     qt_config->beginGroup("Core");
     qt_config->setValue("gpu_refresh_rate", Settings::values.gpu_refresh_rate);
     qt_config->setValue("frame_skip", Settings::values.frame_skip);
-    qt_config->setValue("gfx_backend", QString::fromStdString(Settings::values.gfx_backend));
     qt_config->endGroup();
 
     qt_config->beginGroup("Renderer");
+    qt_config->setValue("use_hw_renderer", Settings::values.use_hw_renderer);
+    qt_config->setValue("use_hw_shaders", Settings::values.use_hw_shaders);
+
     // Cast to double because Qt's written float values are not human-readable
     qt_config->setValue("bg_red",   (double)Settings::values.bg_red);
     qt_config->setValue("bg_green", (double)Settings::values.bg_green);

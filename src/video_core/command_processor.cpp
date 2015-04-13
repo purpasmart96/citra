@@ -118,7 +118,7 @@ static inline void WritePicaReg(u32 id, u32 value, u32 mask) {
             PrimitiveAssembler<DebugUtils::GeometryDumper::Vertex> dumping_primitive_assembler(registers.triangle_topology.Value());
             PrimitiveAssembler<RawVertex> ogl_primitive_assembler(registers.triangle_topology.Value());
 
-            if (Settings::values.gfx_backend.substr(0, Settings::values.gfx_backend.find_first_of(" #")).compare("SW") == 0) {
+            if (Settings::values.use_hw_renderer == false) {
                 for (unsigned int index = 0; index < registers.num_vertices; ++index)
                 {
                     unsigned int vertex = is_indexed ? (index_u16 ? index_address_16[index] : index_address_8[index]) : index;

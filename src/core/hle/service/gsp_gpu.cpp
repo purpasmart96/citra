@@ -207,18 +207,18 @@ static void ReadHWRegs(Service::Interface* self) {
 
 static void SetBufferSwap(u32 screen_id, const FrameBufferInfo& info) {
     u32 base_address = 0x400000;
-    PAddr phys_address_left = Memory::VirtualToPhysicalAddress(info.address_left);
-    PAddr phys_address_right = Memory::VirtualToPhysicalAddress(info.address_right);
+    //PAddr phys_address_left = Memory::VirtualToPhysicalAddress(info.address_left);
+    //PAddr phys_address_right = Memory::VirtualToPhysicalAddress(info.address_right);
     if (info.active_fb == 0) {
         WriteHWRegs(base_address + 4 * static_cast<u32>(GPU_REG_INDEX(framebuffer_config[screen_id].address_left1)), 4, 
-                &phys_address_left);
+                &info.address_left);
         WriteHWRegs(base_address + 4 * static_cast<u32>(GPU_REG_INDEX(framebuffer_config[screen_id].address_right1)), 4, 
-                &phys_address_right);
+                &info.address_right);
     } else {
         WriteHWRegs(base_address + 4 * static_cast<u32>(GPU_REG_INDEX(framebuffer_config[screen_id].address_left2)), 4, 
-                &phys_address_left);
+                &info.address_left);
         WriteHWRegs(base_address + 4 * static_cast<u32>(GPU_REG_INDEX(framebuffer_config[screen_id].address_right2)), 4, 
-                &phys_address_right);
+                &info.address_right);
     }
     WriteHWRegs(base_address + 4 * static_cast<u32>(GPU_REG_INDEX(framebuffer_config[screen_id].stride)), 4, 
             &info.stride);
@@ -403,8 +403,14 @@ static void ExecuteCommand(const Command& command, u32 thread_id) {
         WriteGPURegister(static_cast<u32>(GPU_REG_INDEX(memory_fill_config[1].value_32bit)), params.value2);
         WriteGPURegister(static_cast<u32>(GPU_REG_INDEX(memory_fill_config[1].control)), params.control2);
 
-        ((RendererOpenGL *)VideoCore::g_renderer)->NotifyFlush(true, Memory::VirtualToPhysicalAddress(params.start1), params.end1 - params.start1);
-        ((RendererOpenGL *)VideoCore::g_renderer)->NotifyFlush(true, Memory::VirtualToPhysicalAddress(params.start2), params.end2 - params.start2);
+        // Only flush if trigger flags set
+        if (params.control1 & 0x1) {
+            ((RendererOpenGL *)VideoCore::g_renderer)->NotifyFlush(true, Memory::VirtualToPhysicalAddress(params.start1), params.end1 - params.start1);
+        }
+
+        if (params.control2 & 0x1) {
+            ((RendererOpenGL *)VideoCore::g_renderer)->NotifyFlush(true, Memory::VirtualToPhysicalAddress(params.start2), params.end2 - params.start2);
+        }
 
         break;
     }
@@ -433,6 +439,9 @@ static void ExecuteCommand(const Command& command, u32 thread_id) {
     case CommandId::SET_TEXTURE_COPY:
     {
         auto& params = command.image_copy;
+
+        //((RendererOpenGL *)VideoCore::g_renderer)->NotifyPreDisplayTransfer(params.in_buffer_address, params.out_buffer_address);
+
         WriteGPURegister(static_cast<u32>(GPU_REG_INDEX(display_transfer_config.input_address)),
                 Memory::VirtualToPhysicalAddress(params.in_buffer_address) >> 3);
         WriteGPURegister(static_cast<u32>(GPU_REG_INDEX(display_transfer_config.output_address)),

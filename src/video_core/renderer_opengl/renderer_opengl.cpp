@@ -7,7 +7,6 @@
 #include "core/hw/hw.h"
 #include "core/hw/lcd.h"
 #include "core/mem_map.h"
-#include "core/settings.h"
 
 #include "common/emu_window.h"
 #include "common/profiler_reporting.h"
@@ -80,7 +79,7 @@ RendererOpenGL::~RendererOpenGL() {
 
 /// Swap buffers (render frame)
 void RendererOpenGL::SwapBuffers() {
-    if (Settings::values.gfx_backend.substr(0, Settings::values.gfx_backend.find_first_of(" #")).compare("OGL") == 0) {
+    if (Settings::values.use_hw_renderer) {
         if (!g_did_render) {
             return;
         }
@@ -116,14 +115,14 @@ void RendererOpenGL::SwapBuffers() {
                 ConfigureFramebufferTexture(textures[i], framebuffer);
                 ConfigureHWFramebuffer(i);
             }
-            if (Settings::values.gfx_backend.substr(0, Settings::values.gfx_backend.find_first_of(" #")).compare("SW") == 0)
+            if (Settings::values.use_hw_renderer == false)
                 LoadFBToActiveGLTexture(GPU::g_regs.framebuffer_config[i], textures[i]);
 
             // Resize the texture in case the framebuffer size has changed
             textures[i].width = desired_size.x;
             textures[i].height = desired_size.y;
-        }
-        if (Settings::values.gfx_backend.substr(0, Settings::values.gfx_backend.find_first_of(" #")).compare("SW") == 0)
+
+        } if (Settings::values.use_hw_renderer == false)
             LoadFBToActiveGLTexture(GPU::g_regs.framebuffer_config[i], textures[i]);
     }
 
@@ -139,7 +138,7 @@ void RendererOpenGL::SwapBuffers() {
     glUseProgram(g_cur_shader);
 #endif
 
-    if (Settings::values.gfx_backend.substr(0, Settings::values.gfx_backend.find_first_of(" #")).compare("OGL") == 0) {
+    if (Settings::values.use_hw_renderer) {
         // TODO: check if really needed
         //glFlush();
         //glFinish();
@@ -158,7 +157,7 @@ void RendererOpenGL::SwapBuffers() {
 
     profiler.BeginFrame();
 
-    if (Settings::values.gfx_backend.substr(0, Settings::values.gfx_backend.find_first_of(" #")).compare("OGL") == 0) {
+    if (Settings::values.use_hw_renderer) {
         glDepthMask(GL_TRUE);
         glBindFramebuffer(GL_FRAMEBUFFER, hw_framebuffers[0]);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -231,7 +230,6 @@ void RendererOpenGL::LoadColorToActiveGLTexture(u8 color_r, u8 color_g, u8 color
  */
 void RendererOpenGL::InitOpenGLObjects() {
     glClearColor(Settings::values.bg_red, Settings::values.bg_green, Settings::values.bg_blue, 0.0f);
-    glDisable(GL_DEPTH_TEST);
 
     // Link shaders and get variable locations
     program_id = ShaderUtil::LoadShaders(GLShaders::g_vertex_shader, GLShaders::g_fragment_shader);
@@ -269,6 +267,7 @@ void RendererOpenGL::InitOpenGLObjects() {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     }
+
     glBindTexture(GL_TEXTURE_2D, 0);
 
     // Hardware renderer setup
@@ -321,7 +320,7 @@ void RendererOpenGL::InitOpenGLObjects() {
 
 Math::Vec2<u32> RendererOpenGL::GetDesiredFramebufferSize(TextureInfo& texture,
             const GPU::Regs::FramebufferConfig& framebuffer) {
-    if (Settings::values.gfx_backend.substr(0, Settings::values.gfx_backend.find_first_of(" #")).compare("OGL") == 0) {
+    if (Settings::values.use_hw_renderer) {
         auto layout = render_window->GetFramebufferLayout();
         Math::Vec2<u32> desired_size(layout.height / 2, layout.width);
 
@@ -383,6 +382,7 @@ void RendererOpenGL::ConfigureFramebufferTexture(TextureInfo& texture,
 
     default:
         UNIMPLEMENTED();
+        break;
     }
 
     glBindTexture(GL_TEXTURE_2D, texture.handle);
@@ -590,6 +590,18 @@ void RendererOpenGL::BeginBatch() {
         break;
     }
 
+    if (Pica::registers.output_merger.red_enable.Value() && (Pica::registers.output_merger.green_enable.Value()) && (Pica::registers.output_merger.blue_enable.Value()) && (Pica::registers.output_merger.alpha_enable.Value())) {
+        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    } else if (Pica::registers.output_merger.green_enable.Value()) {
+        glColorMask(GL_FALSE, GL_TRUE, GL_FALSE, GL_FALSE);
+    } else if (Pica::registers.output_merger.blue_enable.Value()) {
+        glColorMask(GL_FALSE, GL_FALSE, GL_TRUE, GL_FALSE);
+    } else if (Pica::registers.output_merger.alpha_enable.Value()) {
+        glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_TRUE);
+    } else {
+        glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+    }
+
     if (Pica::registers.output_merger.depth_write_enable.Value()) {
         glDepthMask(GL_TRUE);
     } else {
@@ -743,9 +755,9 @@ void RendererOpenGL::BeginBatch() {
             }
 
             if (cur_texture.config.min_filter.Value()) {
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR); // Could be either be GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_NEAREST, or GL_LINEAR
-            } else {
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // Could be either be GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_NEAREST, or GL_LINEAR
+            } else {
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); // Could be either be GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_NEAREST, or GL_LINEAR
             }
 
             switch (cur_texture.config.wrap_s.Value()) {
@@ -872,8 +884,8 @@ void RendererOpenGL::NotifyFlush(bool is_phys_addr, u32 addr, u32 size) {
     }
 }
 
-void RendererOpenGL::NotifyPreDisplayTransfer(u32 src, u32 dest)
-{
+void RendererOpenGL::NotifyPreDisplayTransfer(u32 src, u32 dest) {
+
     //HACK: Just swap screen target when a framebuffer is committed to an LCD screen's mem
     if (dest == GPU::g_regs.framebuffer_config[0].address_left1 ||
         dest == GPU::g_regs.framebuffer_config[0].address_left2 ||

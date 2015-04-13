@@ -27,8 +27,10 @@ VAddr PhysicalToVirtualAddress(const PAddr addr) {
         return 0;
     } else if ((addr >= VRAM_PADDR) && (addr < VRAM_PADDR_END)) {
         return addr - VRAM_PADDR + VRAM_VADDR;
+    //} else if ((addr >= FCRAM_PADDR) && (addr < FCRAM_PADDR_END)) {
+    //    return addr - FCRAM_PADDR + HEAP_LINEAR_VADDR;
     } else if ((addr >= FCRAM_PADDR) && (addr < FCRAM_PADDR_END)) {
-        return addr - FCRAM_PADDR + HEAP_LINEAR_VADDR;
+        return addr - FCRAM_PADDR + HEAP_VADDR;
     }
 
     LOG_ERROR(HW_Memory, "Unknown physical address @ 0x%08x", addr);
@@ -44,9 +46,11 @@ PAddr VirtualToPhysicalAddress(const VAddr addr) {
     if (addr == 0) {
         return 0;
     } else if ((addr >= VRAM_VADDR) && (addr < VRAM_VADDR_END)) {
-        return addr - VRAM_VADDR + VRAM_PADDR;
-    } else if ((addr >= HEAP_LINEAR_VADDR) && (addr < HEAP_LINEAR_VADDR_END)) {
-        return addr - HEAP_LINEAR_VADDR + FCRAM_PADDR;
+        return addr - 0x07000000;
+    //} else if ((addr >= HEAP_LINEAR_VADDR) && (addr < HEAP_LINEAR_VADDR_END)) {
+    //    return addr - HEAP_LINEAR_VADDR + FCRAM_PADDR;
+    } else if ((addr >= HEAP_VADDR) && (addr <  HEAP_VADDR_END)) {
+        return addr - HEAP_VADDR + FCRAM_PADDR;
     }
 
     LOG_ERROR(HW_Memory, "Unknown virtual address @ 0x%08x", addr);
