@@ -132,11 +132,12 @@ void RendererOpenGL::SwapBuffers() {
     DrawScreens();
 
     glBindVertexArray(hw_vertex_array_handle);
-#ifndef USE_OGL_VTXSHADER
-    glUseProgram(hw_program_id);
-#else
-    glUseProgram(g_cur_shader);
-#endif
+
+    if (Settings::values.use_hw_shaders == false) {
+        glUseProgram(hw_program_id);
+    } else {
+        glUseProgram(g_cur_shader);
+    }
 
     if (Settings::values.use_hw_renderer) {
         // TODO: check if really needed
@@ -277,6 +278,8 @@ void RendererOpenGL::InitOpenGLObjects() {
     uniform_alphatest_func = glGetUniformLocation(hw_program_id, "alphatest_func");
     uniform_alphatest_ref = glGetUniformLocation(hw_program_id, "alphatest_ref");
 
+    uniform_fog_color = glGetUniformLocation(hw_program_id, "fog_color");
+
     uniform_tex = glGetUniformLocation(hw_program_id, "tex");
 
     for (int i = 0; i < 6; i++) {
@@ -288,6 +291,15 @@ void RendererOpenGL::InitOpenGLObjects() {
         uniform_tevs[i].color_op = glGetUniformLocation(hw_program_id, (tev_ref_str + ".color_op").c_str());
         uniform_tevs[i].alpha_op = glGetUniformLocation(hw_program_id, (tev_ref_str + ".alpha_op").c_str());
         uniform_tevs[i].const_color = glGetUniformLocation(hw_program_id, (tev_ref_str + ".const_color").c_str());
+    }
+
+    for (int i = 0; i < 8; i++) {
+        std::string frag_light_str = "lights[" + std::to_string(i) + "]";
+        uniform_lights[i].specular0 = glGetUniformLocation(hw_program_id, (frag_light_str + ".specular0").c_str());
+        uniform_lights[i].specular1 = glGetUniformLocation(hw_program_id, (frag_light_str + ".specular1").c_str());
+        uniform_lights[i].diffuse = glGetUniformLocation(hw_program_id, (frag_light_str + ".diffuse").c_str());
+        uniform_lights[i].ambient = glGetUniformLocation(hw_program_id, (frag_light_str + ".ambient").c_str());
+        uniform_lights[i].position = glGetUniformLocation(hw_program_id, (frag_light_str + ".position").c_str());
     }
 
     uniform_out_maps = glGetUniformLocation(hw_program_id, "out_maps");
@@ -305,9 +317,9 @@ void RendererOpenGL::InitOpenGLObjects() {
     // Attach vertex data to VAO
     glBindBuffer(GL_ARRAY_BUFFER, hw_vertex_buffer_handle);
 
-#ifndef USE_OGL_VTXSHADER
-    glUseProgram(hw_program_id);
-#endif
+    if (Settings::values.use_hw_shaders == false) {
+        glUseProgram(hw_program_id);
+    }
 
     for (int i = 0; i < 16; i++) {
         glVertexAttribPointer(attrib_v + i, 4, GL_FLOAT, GL_FALSE, sizeof(RawVertex), (GLvoid*)(i * 4 * sizeof(float)));
@@ -590,8 +602,14 @@ void RendererOpenGL::BeginBatch() {
         break;
     }
 
-    if (Pica::registers.output_merger.red_enable.Value() && (Pica::registers.output_merger.green_enable.Value()) && (Pica::registers.output_merger.blue_enable.Value()) && (Pica::registers.output_merger.alpha_enable.Value())) {
+    // Not finished yet, but so far I have yet to see any problems.
+    if (Pica::registers.output_merger.red_enable.Value() && (Pica::registers.output_merger.green_enable.Value()) &&
+        (Pica::registers.output_merger.blue_enable.Value()) && (Pica::registers.output_merger.alpha_enable.Value())) {
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    } else if (Pica::registers.output_merger.red_enable.Value() && (Pica::registers.output_merger.green_enable.Value()) && (Pica::registers.output_merger.blue_enable.Value())) {
+        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
+    } else if (Pica::registers.output_merger.red_enable.Value()) {
+        glColorMask(GL_TRUE, GL_FALSE, GL_FALSE, GL_FALSE);
     } else if (Pica::registers.output_merger.green_enable.Value()) {
         glColorMask(GL_FALSE, GL_TRUE, GL_FALSE, GL_FALSE);
     } else if (Pica::registers.output_merger.blue_enable.Value()) {
@@ -623,7 +641,7 @@ void RendererOpenGL::BeginBatch() {
         glDisable(GL_BLEND);
     }
     
-#ifdef USE_OGL_VTXSHADER
+if (Settings::values.use_hw_shaders == true) {
     // Switch shaders
     if (g_cur_shader_main != Pica::registers.vs_main_offset.Value()) {
         g_cur_shader_main = Pica::registers.vs_main_offset.Value();
@@ -654,6 +672,8 @@ void RendererOpenGL::BeginBatch() {
         uniform_alphatest_func = glGetUniformLocation(g_cur_shader, "alphatest_func");
         uniform_alphatest_ref = glGetUniformLocation(g_cur_shader, "alphatest_ref");
 
+        uniform_fog_color = glGetUniformLocation(g_cur_shader, "fog_color");
+
         uniform_tex = glGetUniformLocation(g_cur_shader, "tex");
         
         for (int i = 0; i < 6; i++) {
@@ -667,6 +687,15 @@ void RendererOpenGL::BeginBatch() {
             uniform_tevs[i].const_color = glGetUniformLocation(g_cur_shader, (tev_ref_str + ".const_color").c_str());
         }
 
+        for (int i = 0; i < 8; i++) {
+            std::string frag_light_str = "lights[" + std::to_string(i) + "]";
+            uniform_lights[i].specular0 = glGetUniformLocation(g_cur_shader, (frag_light_str + ".specular0").c_str());
+            uniform_lights[i].specular1 = glGetUniformLocation(g_cur_shader, (frag_light_str + ".specular1").c_str());
+            uniform_lights[i].diffuse = glGetUniformLocation(g_cur_shader, (frag_light_str + ".diffuse").c_str());
+            uniform_lights[i].ambient = glGetUniformLocation(g_cur_shader, (frag_light_str + ".ambient").c_str());
+            uniform_lights[i].position = glGetUniformLocation(g_cur_shader, (frag_light_str + ".position").c_str());
+        }
+
         uniform_out_maps = glGetUniformLocation(g_cur_shader, "out_maps");
 
         glUniform1i(uniform_tex, 0);
@@ -678,7 +707,7 @@ void RendererOpenGL::BeginBatch() {
             glEnableVertexAttribArray(attrib_v + i);
         }
     }
-#endif
+}
 
     for (int i = 0; i < 16; ++i) {
         const auto& output_register_map = Pica::registers.vs_output_attributes[i];
@@ -711,12 +740,96 @@ void RendererOpenGL::BeginBatch() {
         glUniform4fv(uniform_tevs[i].const_color, 1, (GLfloat *)const_color);
     }
 
+    auto frag_lights = Pica::registers.GetFragLights();
+    for (int i = 0; i < 8; i++) {
+        float specular0[4] = { frag_lights[i].specular0.red.Value() / 255.0f, frag_lights[i].specular0.green.Value() / 255.0f, frag_lights[i].specular0.blue.Value() / 255.0f, frag_lights[i].specular0.alpha.Value() / 255.0f };
+        float specular1[4] = { frag_lights[i].specular1.red.Value() / 255.0f, frag_lights[i].specular1.green.Value() / 255.0f, frag_lights[i].specular1.blue.Value() / 255.0f, frag_lights[i].specular1.alpha.Value() / 255.0f };
+        float diffuse[4]   = { frag_lights[i].diffuse.red.Value() / 255.0f, frag_lights[i].diffuse.green.Value() / 255.0f, frag_lights[i].diffuse.blue.Value() / 255.0f, frag_lights[i].diffuse.alpha.Value() / 255.0f };
+        float ambient[4]   = { frag_lights[i].ambient.red.Value() / 255.0f, frag_lights[i].ambient.green.Value() / 255.0f, frag_lights[i].ambient.blue.Value() / 255.0f, frag_lights[i].ambient.alpha.Value() / 255.0f };
+        float position[4]  = { frag_lights[i].position.x.Value() / 255.0f, frag_lights[i].position.y.Value() / 255.0f, frag_lights[i].position.z.Value() / 255.0f, frag_lights[i].position.w.Value() / 255.0f };
+
+        glUniform4fv(uniform_lights[i].specular0, 1, (GLfloat *)specular0);
+        glUniform4fv(uniform_lights[i].specular1, 1, (GLfloat *)specular1);
+        glUniform4fv(uniform_lights[i].diffuse, 1, (GLfloat *)diffuse);
+        glUniform4fv(uniform_lights[i].ambient, 1, (GLfloat *)ambient);
+        glUniform4fv(uniform_lights[i].position, 1, (GLfloat *)position);
+    }
+
+/*
+    LOG_ERROR(Render_OpenGL, "specular0 red   frag_light0 %d", frag_lights[0].specular0.red.Value());
+    LOG_ERROR(Render_OpenGL, "specular0 green frag_light0 %d", frag_lights[0].specular0.green.Value());
+    LOG_ERROR(Render_OpenGL, "specular0 blue  frag_light0 %d", frag_lights[0].specular0.blue.Value());
+    LOG_ERROR(Render_OpenGL, "specular0 alpha frag_light0 %d", frag_lights[0].specular0.alpha.Value());
+    LOG_ERROR(Render_OpenGL, "diffuse   red   frag_light0 %d", frag_lights[0].diffuse.red.Value());
+    LOG_ERROR(Render_OpenGL, "diffuse   green frag_light0 %d", frag_lights[0].diffuse.green.Value());
+    LOG_ERROR(Render_OpenGL, "diffuse   blue  frag_light0 %d", frag_lights[0].diffuse.blue.Value());
+    LOG_ERROR(Render_OpenGL, "diffuse   alpha frag_light0 %d", frag_lights[0].diffuse.alpha.Value());
+    LOG_ERROR(Render_OpenGL, "position  x     frag_light0 %d", frag_lights[0].position.x.Value());
+    LOG_ERROR(Render_OpenGL, "position  y     frag_light0 %d", frag_lights[0].position.y.Value());
+    LOG_ERROR(Render_OpenGL, "position  z     frag_light0 %d", frag_lights[0].position.z.Value());
+    LOG_ERROR(Render_OpenGL, "position  w     frag_light0 %d", frag_lights[0].position.w.Value());
+
+    LOG_ERROR(Render_OpenGL, "unknown1        frag_light0 %d", frag_lights[0].unknown1);
+    LOG_ERROR(Render_OpenGL, "unknown2        frag_light0 %d", frag_lights[0].unknown2);
+    LOG_ERROR(Render_OpenGL, "unknown3        frag_light0 %d", frag_lights[0].unknown3);
+    LOG_ERROR(Render_OpenGL, "unknown4        frag_light0 %d", frag_lights[0].unknown4);
+
+    LOG_ERROR(Render_OpenGL, "specular0 red   frag_light1 %d", frag_lights[1].specular0.red.Value());
+    LOG_ERROR(Render_OpenGL, "specular0 green frag_light1 %d", frag_lights[1].specular0.green.Value());
+    LOG_ERROR(Render_OpenGL, "specular0 blue  frag_light1 %d", frag_lights[1].specular0.blue.Value());
+    LOG_ERROR(Render_OpenGL, "specular0 alpha frag_light1 %d", frag_lights[1].specular0.alpha.Value());
+    LOG_ERROR(Render_OpenGL, "position  x     frag_light1 %d", frag_lights[1].position.x.Value());
+    LOG_ERROR(Render_OpenGL, "position  y     frag_light1 %d", frag_lights[1].position.y.Value());
+    LOG_ERROR(Render_OpenGL, "position  z     frag_light1 %d", frag_lights[1].position.z.Value());
+    LOG_ERROR(Render_OpenGL, "position  w     frag_light1 %d", frag_lights[1].position.w.Value());
+
+    LOG_ERROR(Render_OpenGL, "unknown1        frag_light1 %d", frag_lights[1].unknown1);
+    LOG_ERROR(Render_OpenGL, "unknown2        frag_light1 %d", frag_lights[1].unknown2);
+    LOG_ERROR(Render_OpenGL, "unknown3        frag_light1 %d", frag_lights[1].unknown3);
+    LOG_ERROR(Render_OpenGL, "unknown4        frag_light1 %d", frag_lights[1].unknown4);
+
+    LOG_ERROR(Render_OpenGL, "specular0 red   frag_light2 %d", frag_lights[2].specular0.red.Value());
+    LOG_ERROR(Render_OpenGL, "specular0 green frag_light2 %d", frag_lights[2].specular0.green.Value());
+    LOG_ERROR(Render_OpenGL, "specular0 blue  frag_light2 %d", frag_lights[2].specular0.blue.Value());
+    LOG_ERROR(Render_OpenGL, "specular0 alpha frag_light2 %d", frag_lights[2].specular0.alpha.Value());
+    LOG_ERROR(Render_OpenGL, "position  x     frag_light2 %d", frag_lights[2].position.x.Value());
+    LOG_ERROR(Render_OpenGL, "position  y     frag_light2 %d", frag_lights[2].position.y.Value());
+    LOG_ERROR(Render_OpenGL, "position  z     frag_light2 %d", frag_lights[2].position.z.Value());
+    LOG_ERROR(Render_OpenGL, "position  w     frag_light2 %d", frag_lights[2].position.w.Value());
+
+    LOG_ERROR(Render_OpenGL, "unknown1        frag_light2 %d", frag_lights[2].unknown1);
+    LOG_ERROR(Render_OpenGL, "unknown2        frag_light2 %d", frag_lights[2].unknown2);
+    LOG_ERROR(Render_OpenGL, "unknown3        frag_light2 %d", frag_lights[2].unknown3);
+    LOG_ERROR(Render_OpenGL, "unknown4        frag_light2 %d", frag_lights[2].unknown4);
+
+    LOG_ERROR(Render_OpenGL, "specular0 red   frag_light3 %d", frag_lights[3].specular0.red.Value());
+    LOG_ERROR(Render_OpenGL, "specular0 green frag_light3 %d", frag_lights[3].specular0.green.Value());
+    LOG_ERROR(Render_OpenGL, "specular0 blue  frag_light3 %d", frag_lights[3].specular0.blue.Value());
+    LOG_ERROR(Render_OpenGL, "specular0 alpha frag_light3 %d", frag_lights[3].specular0.alpha.Value());
+    LOG_ERROR(Render_OpenGL, "position  x     frag_light3 %d", frag_lights[3].position.x.Value());
+    LOG_ERROR(Render_OpenGL, "position  y     frag_light3 %d", frag_lights[3].position.y.Value());
+    LOG_ERROR(Render_OpenGL, "position  z     frag_light3 %d", frag_lights[3].position.z.Value());
+    LOG_ERROR(Render_OpenGL, "position  w     frag_light3 %d", frag_lights[3].position.w.Value());
+
+    LOG_ERROR(Render_OpenGL, "unknown1        frag_light3 %d", frag_lights[3].unknown1);
+    LOG_ERROR(Render_OpenGL, "unknown2        frag_light3 %d", frag_lights[3].unknown2);
+    LOG_ERROR(Render_OpenGL, "unknown3        frag_light3 %d", frag_lights[3].unknown3);
+    LOG_ERROR(Render_OpenGL, "unknown4        frag_light3 %d", frag_lights[3].unknown4);
+*/
+    //LOG_ERROR(Render_OpenGL, "GPU position z light1 %d", frag_lights[i].position.z.Value());
+    //LOG_ERROR(Render_OpenGL, "GPU position w light1 %d", frag_lights[i].position.w.Value());
+
+
+    //LOG_ERROR(Render_OpenGL, "GPU vs_output_mask %d", Pica::registers.vs_output_mask);
+
     if (Pica::registers.output_merger.alpha_test.enable.Value()) {
         glUniform1i(uniform_alphatest_func, Pica::registers.output_merger.alpha_test.func.Value());
         glUniform1f(uniform_alphatest_ref, Pica::registers.output_merger.alpha_test.ref.Value() / 255.0f);
     } else {
         glUniform1i(uniform_alphatest_func, 1);
     }
+
+    glUniform1f(uniform_fog_color, Pica::registers.fog_color.Value() / 255.0f);
 
     auto pica_textures = Pica::registers.GetTextures();
 
@@ -755,9 +868,9 @@ void RendererOpenGL::BeginBatch() {
             }
 
             if (cur_texture.config.min_filter.Value()) {
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // Could be either be GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_NEAREST, or GL_LINEAR
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
             } else {
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); // Could be either be GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_NEAREST, or GL_LINEAR
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
             }
 
             switch (cur_texture.config.wrap_s.Value()) {
@@ -766,7 +879,7 @@ void RendererOpenGL::BeginBatch() {
                 break;
 
             case Pica::Regs::TextureConfig::WrapMode::ClampToBorder:
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER); // This seems to be a logical guess
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER); // Almost guaranteed to be right
                 break;
 
             case Pica::Regs::TextureConfig::WrapMode::Repeat:
@@ -788,7 +901,7 @@ void RendererOpenGL::BeginBatch() {
                 break;
 
             case Pica::Regs::TextureConfig::WrapMode::ClampToBorder:
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER); // This seems to be a logical guess
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER); // Almost guaranteed to be right
                 break;
 
             case Pica::Regs::TextureConfig::WrapMode::Repeat:
@@ -848,24 +961,24 @@ void RendererOpenGL::EndBatch() {
 }
 
 void RendererOpenGL::SetUniformBool(u32 index, int value) {
-#ifdef USE_OGL_VTXSHADER
-    render_window->MakeCurrent();
-    glUniform1i(uniform_b + index, value);
-#endif
+    if (Settings::values.use_hw_shaders == true) {
+        render_window->MakeCurrent();
+        glUniform1i(uniform_b + index, value);
+    }
 }
 
 void RendererOpenGL::SetUniformInts(u32 index, const u32* values) {
-#ifdef USE_OGL_VTXSHADER
-    render_window->MakeCurrent();
-    glUniform4iv(uniform_i + index, 1, (const GLint*)values);
-#endif
+    if (Settings::values.use_hw_shaders == true) {
+        render_window->MakeCurrent();
+        glUniform4iv(uniform_i + index, 1, (const GLint*)values);
+    }
 }
 
 void RendererOpenGL::SetUniformFloats(u32 index, const float* values) {
-#ifdef USE_OGL_VTXSHADER
-    render_window->MakeCurrent();
-    glUniform4fv(uniform_c + index, 1, values);
-#endif
+    if (Settings::values.use_hw_shaders == true) {
+        render_window->MakeCurrent();
+        glUniform4fv(uniform_c + index, 1, values);
+    }
 }
 
 void RendererOpenGL::NotifyFlush(bool is_phys_addr, u32 addr, u32 size) {

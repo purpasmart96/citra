@@ -78,6 +78,14 @@ private:
         GLuint const_color;
     };
 
+    struct FragLights {
+        GLuint specular0;
+        GLuint specular1;
+        GLuint diffuse;
+        GLuint ambient;
+        GLuint position;
+    };
+
     void InitOpenGLObjects();
 	Math::Vec2<u32> GetDesiredFramebufferSize(TextureInfo& texture,
 												const GPU::Regs::FramebufferConfig& framebuffer);
@@ -129,8 +137,10 @@ private:
     // Hardware fragment shader
     GLuint uniform_alphatest_func;
     GLuint uniform_alphatest_ref;
+    GLuint uniform_fog_color;
     GLuint uniform_tex;
     TEVUniforms uniform_tevs[6];
+    FragLights uniform_lights[8];
     GLuint uniform_out_maps;
     GLuint uniform_tex_envs;
 };

@@ -310,7 +310,30 @@ struct Regs {
     TevStageConfig tev_stage2;
     INSERT_PADDING_WORDS(0x3);
     TevStageConfig tev_stage3;
-    INSERT_PADDING_WORDS(0x13);
+    INSERT_PADDING_WORDS(0x3);
+
+    enum class FogMode : u32 {
+        Linear     = 0,
+        Exp        = 1,
+        Exp2       = 2,
+    };
+
+    BitField<0, 2, FogMode> fog_mode;
+
+    union {
+        BitField<0, 24, u32> fog_color;
+    };
+
+    /*
+    union {
+        BitField< 0, 8, u32> red;
+        BitField< 8, 8, u32> green;
+        BitField<16, 8, u32> blue;
+        BitField<24, 8, u32> alpha;
+    } fog_color;
+    */
+
+    INSERT_PADDING_WORDS(0xe);
     TevStageConfig tev_stage4;
     INSERT_PADDING_WORDS(0x3);
     TevStageConfig tev_stage5;
@@ -493,13 +516,175 @@ struct Regs {
         }
     } framebuffer;
 
-    INSERT_PADDING_WORDS(0xa5);
+    INSERT_PADDING_WORDS(0x20);
 
-    u32 frag_lut_sampler;
+    struct FragLightConfig {
+        union {
+            BitField< 0, 8, u32> red;
+            BitField< 8, 8, u32> green;
+            BitField<16, 8, u32> blue;
+            BitField<24, 8, u32> alpha;
+        } specular0;
+
+        union {
+            BitField< 0, 8, u32> red;
+            BitField< 8, 8, u32> green;
+            BitField<16, 8, u32> blue;
+            BitField<24, 8, u32> alpha;
+        } specular1;
+
+        union {
+            BitField< 0, 8, u32> red;
+            BitField< 8, 8, u32> green;
+            BitField<16, 8, u32> blue;
+            BitField<24, 8, u32> alpha;
+        } diffuse;
+
+        union {
+            BitField< 0, 8, u32> red;
+            BitField< 8, 8, u32> green;
+            BitField<16, 8, u32> blue;
+            BitField<24, 8, u32> alpha;
+        } ambient;
+
+        union {
+            BitField< 0, 16, u32> x;
+            BitField<16, 16, u32> y;
+        } position;
+
+        BitField< 0, 24, u32> position_z;
+
+        // Value is usually 00000800
+        union {
+            BitField< 0, 16, u32> x;
+            BitField<16, 16, u32> y;
+        } spot_position;
+
+        BitField< 0, 24, u32> spot_position_z;
+
+        union {
+            BitField< 1, 1, u32> two_side_diffuse;
+            BitField< 2, 1, u32> geom_factor0;
+            BitField< 3, 1, u32> geom_factor1;
+        };
+
+        u32 type;
+
+        BitField< 0, 24, u32> dist_attn_bias;
+
+        BitField< 0, 24, u32> dist_attn_scale;
+
+        INSERT_PADDING_WORDS(0x4);
+    };
+
+    FragLightConfig frag_light0;
+    FragLightConfig frag_light1;
+    FragLightConfig frag_light2;
+    FragLightConfig frag_light3;
+    FragLightConfig frag_light4;
+    FragLightConfig frag_light5;
+    FragLightConfig frag_light6;
+    FragLightConfig frag_light7;
+
+    const std::array<Regs::FragLightConfig, 8> GetFragLights() const {
+        return { frag_light0, frag_light1,
+                 frag_light2, frag_light3,
+                 frag_light4, frag_light5,
+                 frag_light6, frag_light7 };
+    };
+
+    INSERT_PADDING_WORDS(0x3);
+
+    union {
+        BitField< 0, 3, u32> lighting_mode;
+        BitField< 3, 2, u32> frensel_selector;
+        BitField<16, 1, u32> enable_primary_shadow;
+        BitField<17, 1, u32> enable_secondary_shadow;
+        BitField<18, 1, u32> invert_shadow;
+        BitField<18, 1, u32> enable_shadow_alpha;
+        BitField<22, 2, u32> bump_selector;
+        BitField<24, 2, u32> shadow_selector;
+        BitField<27, 1, u32> clamp_higlights;
+        BitField<28, 2, u32> bump_mode;
+        BitField<30, 1, u32> disable_bump_renorm;
+    } frag_light_func_mode0;
+
+    // Toggles shadows and spots and distance attenuation for the light source
+    union {
+        BitField< 0, 1, u32> light_source0_shadow;
+        BitField< 1, 1, u32> light_source1_shadow;
+        BitField< 2, 1, u32> light_source2_shadow;
+        BitField< 3, 1, u32> light_source3_shadow;
+        BitField< 4, 1, u32> light_source4_shadow;
+        BitField< 5, 1, u32> light_source5_shadow;
+        BitField< 6, 1, u32> light_source6_shadow;
+        BitField< 7, 1, u32> light_source7_shadow;
+        BitField< 8, 1, u32> light_source0_spot;
+        BitField< 9, 1, u32> light_source1_spot;
+        BitField<10, 1, u32> light_source2_spot;
+        BitField<11, 1, u32> light_source3_spot;
+        BitField<12, 1, u32> light_source4_spot;
+        BitField<13, 1, u32> light_source5_spot;
+        BitField<14, 1, u32> light_source6_spot;
+        BitField<15, 1, u32> light_source7_spot;
+        BitField<24, 1, u32> light_source0_dist_attn;
+        BitField<25, 1, u32> light_source1_dist_attn;
+        BitField<26, 1, u32> light_source2_dist_attn;
+        BitField<27, 1, u32> light_source3_dist_attn;
+        BitField<28, 1, u32> light_source4_dist_attn;
+        BitField<29, 1, u32> light_source5_dist_attn;
+        BitField<30, 1, u32> light_source6_dist_attn;
+        BitField<31, 1, u32> light_source7_dist_attn;
+    } frag_light_func_mode1;
+
+    // These toggle the fragment light sources
+    union {
+        BitField< 0, 1, u32> light_source0;
+        BitField< 1, 1, u32> light_source1;
+        BitField< 2, 1, u32> light_source2;
+        BitField< 3, 1, u32> light_source3;
+        BitField< 4, 1, u32> light_source4;
+        BitField< 5, 1, u32> light_source5;
+        BitField< 6, 1, u32> light_source6;
+        BitField< 7, 1, u32> light_source7;
+    } frag_light_toggle;
 
     INSERT_PADDING_WORDS(0x2);
 
-    u32 frag_lut_param;
+    union {
+        BitField< 0, 1, u32> output0;
+        BitField< 1, 1, u32> output1;
+        BitField< 2, 1, u32> output2;
+        BitField< 3, 1, u32> output3;
+        BitField< 4, 1, u32> output4;
+        BitField< 5, 1, u32> output5;
+        BitField< 6, 1, u32> output6;
+        BitField< 7, 1, u32> output7;
+        BitField< 8, 1, u32> output8;
+        BitField< 9, 1, u32> output9;
+        BitField<10, 1, u32> output10;
+        BitField<11, 1, u32> output11;
+        BitField<12, 1, u32> output12;
+        BitField<13, 1, u32> output13;
+        BitField<14, 1, u32> output14;
+        BitField<15, 1, u32> output15;
+        BitField<16, 1, u32> output16;
+        BitField<17, 1, u32> output17;
+        BitField<18, 1, u32> output18;
+        BitField<19, 1, u32> output19;
+        BitField<20, 1, u32> output20;
+        BitField<21, 1, u32> output21;
+        BitField<22, 1, u32> output22;
+        BitField<23, 1, u32> output23;
+        BitField<24, 1, u32> output24;
+        BitField<25, 1, u32> output25;
+        BitField<26, 1, u32> output26;
+        BitField<27, 1, u32> output27;
+        BitField<28, 1, u32> output28;
+        BitField<29, 1, u32> output29;
+        BitField<30, 1, u32> output30;
+        BitField<31, 1, u32> output31;
+    } frag_lut_data0;
 
     INSERT_PADDING_WORDS(0x37);
 
@@ -813,12 +998,24 @@ struct Regs {
         ADD_FIELD(tev_stage1);
         ADD_FIELD(tev_stage2);
         ADD_FIELD(tev_stage3);
+        ADD_FIELD(fog_mode);
+        ADD_FIELD(fog_color);
         ADD_FIELD(tev_stage4);
         ADD_FIELD(tev_stage5);
         ADD_FIELD(output_merger);
         ADD_FIELD(framebuffer);
-        ADD_FIELD(frag_lut_sampler);
-        ADD_FIELD(frag_lut_param);
+        ADD_FIELD(frag_light0);
+        ADD_FIELD(frag_light1);
+        ADD_FIELD(frag_light2);
+        ADD_FIELD(frag_light3);
+        ADD_FIELD(frag_light4);
+        ADD_FIELD(frag_light5);
+        ADD_FIELD(frag_light6);
+        ADD_FIELD(frag_light7);
+        ADD_FIELD(frag_light_func_mode0);
+        ADD_FIELD(frag_light_func_mode1);
+        ADD_FIELD(frag_light_toggle);
+        ADD_FIELD(frag_lut_data0);
         ADD_FIELD(vertex_attributes);
         ADD_FIELD(index_array);
         ADD_FIELD(num_vertices);
@@ -893,12 +1090,24 @@ ASSERT_REG_POSITION(tev_stage0, 0xc0);
 ASSERT_REG_POSITION(tev_stage1, 0xc8);
 ASSERT_REG_POSITION(tev_stage2, 0xd0);
 ASSERT_REG_POSITION(tev_stage3, 0xd8);
+ASSERT_REG_POSITION(fog_mode, 0xe0);
+ASSERT_REG_POSITION(fog_color, 0xe1);
 ASSERT_REG_POSITION(tev_stage4, 0xf0);
 ASSERT_REG_POSITION(tev_stage5, 0xf8);
 ASSERT_REG_POSITION(output_merger, 0x100);
 ASSERT_REG_POSITION(framebuffer, 0x110);
-ASSERT_REG_POSITION(frag_lut_sampler, 0x1c5);
-ASSERT_REG_POSITION(frag_lut_param, 0x1c8);
+ASSERT_REG_POSITION(frag_light0, 0x140);
+ASSERT_REG_POSITION(frag_light1, 0x150);
+ASSERT_REG_POSITION(frag_light2, 0x160);
+ASSERT_REG_POSITION(frag_light3, 0x170);
+ASSERT_REG_POSITION(frag_light4, 0x180);
+ASSERT_REG_POSITION(frag_light5, 0x190);
+ASSERT_REG_POSITION(frag_light6, 0x1a0);
+ASSERT_REG_POSITION(frag_light7, 0x1b0);
+ASSERT_REG_POSITION(frag_light_func_mode0, 0x1c3);
+ASSERT_REG_POSITION(frag_light_func_mode1, 0x1c4);
+ASSERT_REG_POSITION(frag_light_toggle, 0x1c5);
+ASSERT_REG_POSITION(frag_lut_data0, 0x1c8);
 ASSERT_REG_POSITION(vertex_attributes, 0x200);
 ASSERT_REG_POSITION(index_array, 0x227);
 ASSERT_REG_POSITION(num_vertices, 0x228);

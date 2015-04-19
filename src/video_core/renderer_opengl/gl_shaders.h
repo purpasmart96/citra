@@ -67,6 +67,7 @@ void main() {
     SetVal(15, v[3].y);
 
     gl_Position = v[0];
+
 }
 )";
 
@@ -78,6 +79,10 @@ out vec4 color;
 
 uniform int alphatest_func;
 uniform float alphatest_ref;
+
+uniform int fog_mode;
+
+uniform vec4 fog_color;
 
 uniform sampler2D tex[3];
 
@@ -92,7 +97,35 @@ struct TEV
     vec4 const_color;
 };
 
+struct FragLight
+{
+    vec4 specular0;
+    vec4 specular1;
+    vec4 diffuse;
+    vec4 ambient;
+    vec4 position;
+    //float position_z
+    //vec4 spot_position;
+    //float spot_position_z;
+    //vec4 dist_attn;
+
+
+};
+
+/*
+struct FragMaterial
+{
+    vec4 shininess;
+    vec4 emission;
+    vec4 specular;
+    vec4 diffuse;
+    vec4 ambient;
+};
+*/
+
 uniform TEV tevs[6];
+
+uniform FragLight lights[8];
 
 uniform int out_maps[16*4];
 
@@ -199,6 +232,7 @@ float GetAlphaModifier(int factor, vec4 color) {
 }
 
 vec3 ColorCombine(int op, vec3 color[3]) {
+
     if (op == 0) {
         return color[0];
     }
@@ -218,7 +252,7 @@ vec3 ColorCombine(int op, vec3 color[3]) {
         return max(color[0] - color[1], 0.0);
     }
     else if (op == 6) {
-        //return (dot(color[0] - vec3(0.5, 0.5, 0.5), color[1] - vec3(0.5, 0.5, 0.5)), 0.0);
+        //return (dot (4.0 * (color[0] - vec3(0.5, 0.5, 0.5), color[1] - vec3(0.5, 0.5, 0.5));
     }
     else if (op == 8) {
         return min(color[0] * color[1] + color[2], 1.0);
@@ -279,7 +313,6 @@ void main(void) {
     for (int i = 0; i < 6; ++i) {
         ProcessTexEnv(i);
     }
-
     if (alphatest_func == 0) {
         discard;
     }

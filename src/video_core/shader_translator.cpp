@@ -260,6 +260,8 @@ std::string PICAInstrToGLSL(nihstro::Instruction instr, const u32* swizzle_data)
 
         case nihstro::OpCode::Id::DP3:
         case nihstro::OpCode::Id::DP4:
+        case nihstro::OpCode::Id::DPH: // TODO: Need to somehow force the .w component to 1.0 for DPH.
+        case nihstro::OpCode::Id::DPHI:
         {
             u32 mask_len = GetRegMaskLen(swizzle_data[instr.common.operand_desc_id.Value()]);
             if (mask_len == 1) {
@@ -316,10 +318,30 @@ std::string PICAInstrToGLSL(nihstro::Instruction instr, const u32* swizzle_data)
             instr_text += "if (";
             instr_text += src1;
             instr_text += ") >= (";
-            instr_text += src1;
+            instr_text += src2;
             instr_text += ") ";
             instr_text += dst;
-            instr_text += " = 1.0 ";
+            instr_text += " = 1.0;";
+            instr_text += " else ";
+            instr_text += dst;
+            instr_text += " = 0.0";
+            instr_text += ";\n";
+            break;
+        }
+
+        case nihstro::OpCode::Id::SLT:
+        {
+            instr_text += "if (";
+            instr_text += src1;
+            instr_text += ") < (";
+            instr_text += src2;
+            instr_text += ") ";
+            instr_text += dst;
+            instr_text += " = 1.0";
+            instr_text += ";\n";
+            instr_text += " else ";
+            instr_text += dst;
+            instr_text += " = 0.0";
             instr_text += ";\n";
             break;
         }
@@ -408,6 +430,39 @@ std::string PICAInstrToGLSL(nihstro::Instruction instr, const u32* swizzle_data)
             instr_text += dst;
             instr_text += " = ";
             instr_text += src1;
+            instr_text += ";\n";
+            break;
+        }
+
+        case nihstro::OpCode::Id::SGEI:
+        {
+            instr_text += "if (";
+            instr_text += src1;
+            instr_text += ") >= (";
+            instr_text += src2;
+            instr_text += ") ";
+            instr_text += dst;
+            instr_text += " = 1.0;";
+            instr_text += " else ";
+            instr_text += dst;
+            instr_text += " = 0.0";
+            instr_text += ";\n";
+            break;
+        }
+
+        case nihstro::OpCode::Id::SLTI:
+        {
+            instr_text += "if (";
+            instr_text += src1;
+            instr_text += ") < (";
+            instr_text += src2;
+            instr_text += ") ";
+            instr_text += dst;
+            instr_text += " = 1.0";
+            instr_text += ";\n";
+            instr_text += " else ";
+            instr_text += dst;
+            instr_text += " = 0.0";
             instr_text += ";\n";
             break;
         }
@@ -643,7 +698,14 @@ std::string PICAInstrToGLSL(nihstro::Instruction instr, const u32* swizzle_data)
         switch (instr.opcode.Value().EffectiveOpCode())
         {
         case nihstro::OpCode::Id::MADI:
-            instr_text = "// MADI not yet implemented\n";
+            instr_text += dst;
+            instr_text += " = ";
+            instr_text += src1;
+            instr_text += " * ";
+            instr_text += src2;
+            instr_text += " + ";
+            instr_text += src3;
+            instr_text += ";\n";
             break;
 
         case nihstro::OpCode::Id::MAD:
