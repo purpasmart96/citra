@@ -6,6 +6,7 @@
 #include "core/hle/service/fs/archive.h"
 #include "core/hle/service/ptm/ptm.h"
 #include "core/hle/service/ptm/ptm_play.h"
+#include "core/hle/service/ptm/ptm_s.h"
 #include "core/hle/service/ptm/ptm_sysm.h"
 #include "core/hle/service/ptm/ptm_u.h"
 
@@ -22,24 +23,61 @@ static bool shell_open = true;
 
 static bool battery_is_charging = true;
 
-u32 GetAdapterState() {
+void GetAdapterState(Service::Interface* self) {
+    u32* cmd_buff = Kernel::GetCommandBuffer();
+
     // TODO(purpasmart96): This function is only a stub,
     // it returns a valid result without implementing full functionality.
-    return battery_is_charging ? 1 : 0;
+
+    cmd_buff[1] = RESULT_SUCCESS.raw;
+    cmd_buff[2] = battery_is_charging ? 1 : 0;
+
+    LOG_WARNING(Service_PTM, "(STUBBED) called");
 }
 
-u32 GetShellState() {
-    return shell_open ? 1 : 0;
+void GetShellState(Service::Interface* self) {
+    u32* cmd_buff = Kernel::GetCommandBuffer();
+
+    cmd_buff[1] = RESULT_SUCCESS.raw;
+    cmd_buff[2] = shell_open ? 1 : 0;
 }
 
-ChargeLevels GetBatteryLevel() {
+void GetBatteryLevel(Service::Interface* self) {
+    u32* cmd_buff = Kernel::GetCommandBuffer();
+
     // TODO(purpasmart96): This function is only a stub,
     // it returns a valid result without implementing full functionality.
-    return ChargeLevels::CompletelyFull; // Set to a completely full battery
+
+    cmd_buff[1] = RESULT_SUCCESS.raw;
+    cmd_buff[2] = static_cast<u32>(ChargeLevels::CompletelyFull); // Set to a completely full battery
+
+    LOG_WARNING(Service_PTM, "(STUBBED) called");
+}
+
+void GetBatteryChargeState(Service::Interface* self) {
+    u32* cmd_buff = Kernel::GetCommandBuffer();
+
+    // TODO(purpasmart96): This function is only a stub,
+    // it returns a valid result without implementing full functionality.
+
+    cmd_buff[1] = RESULT_SUCCESS.raw;
+    cmd_buff[2] = battery_is_charging ? 1 : 0;
+
+    LOG_WARNING(Service_PTM, "(STUBBED) called");
+}
+
+void IsLegacyPowerOff(Service::Interface* self) {
+    u32* cmd_buff = Kernel::GetCommandBuffer();
+
+    cmd_buff[1] = RESULT_SUCCESS.raw;
+    cmd_buff[2] = 0;
+
+    LOG_WARNING(Service_PTM, "(STUBBED) called");
 }
 
 void Init() {
     AddService(new PTM_Play_Interface);
+    AddService(new PTM_S_Interface);
     AddService(new PTM_Sysm_Interface);
     AddService(new PTM_U_Interface);
 

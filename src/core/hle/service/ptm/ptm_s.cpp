@@ -4,7 +4,7 @@
 
 #include "core/hle/hle.h"
 #include "core/hle/service/ptm/ptm.h"
-#include "core/hle/service/ptm/ptm_sysm.h"
+#include "core/hle/service/ptm/ptm_s.h"
 
 namespace Service {
 namespace PTM {
@@ -42,7 +42,7 @@ const Interface::FunctionInfo FunctionTable[] = {
     {0x08140000, nullptr,             "GetLegacyJumpProhibitedFlag"}
 };
 
-PTM_Sysm_Interface::PTM_Sysm_Interface() {
+PTM_S_Interface::PTM_S_Interface() {
     Register(FunctionTable);
 }
 

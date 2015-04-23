@@ -60,12 +60,32 @@ set(SRCS
             hle/service/hid/hid_spvr.cpp
             hle/service/gsp_lcd.cpp
             hle/service/http_c.cpp
+            hle/service/i2c/i2c.cpp
+            hle/service/i2c/i2c_cam.cpp
+            hle/service/i2c/i2c_deb.cpp
+            hle/service/i2c/i2c_eep.cpp
+            hle/service/i2c/i2c_hid.cpp
+            hle/service/i2c/i2c_ir.cpp
+            hle/service/i2c/i2c_lcd.cpp
+            hle/service/i2c/i2c_mcu.cpp
+            hle/service/i2c/i2c_nfc.cpp
+            hle/service/i2c/i2c_qtm.cpp
             hle/service/ir/ir.cpp
             hle/service/ir/ir_rst.cpp
             hle/service/ir/ir_u.cpp
             hle/service/ir/ir_user.cpp
             hle/service/ldr_ro.cpp
             hle/service/mic_u.cpp
+            hle/service/mcu/mcu.cpp
+            hle/service/mcu/mcu_cam.cpp
+            hle/service/mcu/mcu_cdc.cpp
+            hle/service/mcu/mcu_gpu.cpp
+            hle/service/mcu/mcu_hid.cpp
+            hle/service/mcu/mcu_hwc.cpp
+            hle/service/mcu/mcu_nwm.cpp
+            hle/service/mcu/mcu_pls.cpp
+            hle/service/mcu/mcu_rtc.cpp
+            hle/service/mcu/mcu_snd.cpp
             hle/service/ndm_u.cpp
             hle/service/news_s.cpp
             hle/service/news_u.cpp
@@ -73,10 +93,17 @@ set(SRCS
             hle/service/nim_u.cpp
             hle/service/ns_s.cpp
             hle/service/nwm_uds.cpp
+            hle/service/pdn/pdn.cpp
+            hle/service/pdn/pdn_c.cpp
+            hle/service/pdn/pdn_d.cpp
+            hle/service/pdn/pdn_g.cpp
+            hle/service/pdn/pdn_i.cpp
+            hle/service/pdn/pdn_s.cpp
             hle/service/pm_app.cpp
             hle/service/ptm/ptm.cpp
             hle/service/ptm/ptm_play.cpp
             hle/service/ptm/ptm_u.cpp
+            hle/service/ptm/ptm_s.cpp
             hle/service/ptm/ptm_sysm.cpp
             hle/service/service.cpp
             hle/service/soc_u.cpp
@@ -171,12 +198,32 @@ set(HEADERS
             hle/service/hid/hid_user.h
             hle/service/gsp_lcd.h
             hle/service/http_c.h
+            hle/service/i2c/i2c.h
+            hle/service/i2c/i2c_cam.h
+            hle/service/i2c/i2c_deb.h
+            hle/service/i2c/i2c_eep.h
+            hle/service/i2c/i2c_hid.h
+            hle/service/i2c/i2c_ir.h
+            hle/service/i2c/i2c_lcd.h
+            hle/service/i2c/i2c_mcu.h
+            hle/service/i2c/i2c_nfc.h
+            hle/service/i2c/i2c_qtm.h
             hle/service/ir/ir.h
             hle/service/ir/ir_rst.h
             hle/service/ir/ir_u.h
             hle/service/ir/ir_user.h
             hle/service/ldr_ro.h
             hle/service/mic_u.h
+            hle/service/mcu/mcu.cpp
+            hle/service/mcu/mcu_cam.h
+            hle/service/mcu/mcu_cdc.h
+            hle/service/mcu/mcu_gpu.h
+            hle/service/mcu/mcu_hid.h
+            hle/service/mcu/mcu_hwc.h
+            hle/service/mcu/mcu_nwm.h
+            hle/service/mcu/mcu_pls.h
+            hle/service/mcu/mcu_rtc.h
+            hle/service/mcu/mcu_snd.h
             hle/service/ndm_u.h
             hle/service/news_s.h
             hle/service/news_u.h
@@ -184,10 +231,17 @@ set(HEADERS
             hle/service/nim_u.h
             hle/service/ns_s.h
             hle/service/nwm_uds.h
+            hle/service/pdn/pdn.h
+            hle/service/pdn/pdn_c.h
+            hle/service/pdn/pdn_d.h
+            hle/service/pdn/pdn_g.h
+            hle/service/pdn/pdn_i.h
+            hle/service/pdn/pdn_s.h
             hle/service/pm_app.h
             hle/service/ptm/ptm.h
             hle/service/ptm/ptm_play.h
             hle/service/ptm/ptm_u.h
+            hle/service/ptm/ptm_s.h
             hle/service/ptm/ptm_sysm.h
             hle/service/service.h
             hle/service/soc_u.h

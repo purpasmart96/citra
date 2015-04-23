@@ -43,7 +43,10 @@
 #include "core/hle/service/fs/archive.h"
 #include "core/hle/service/cfg/cfg.h"
 #include "core/hle/service/hid/hid.h"
+#include "core/hle/service/i2c/i2c.h"
 #include "core/hle/service/ir/ir.h"
+#include "core/hle/service/mcu/mcu.h"
+#include "core/hle/service/pdn/pdn.h"
 #include "core/hle/service/ptm/ptm.h"
 
 namespace Service {
@@ -113,9 +116,12 @@ void Init() {
     Service::FS::ArchiveInit();
     Service::CFG::Init();
     Service::APT::Init();
+    Service::PDN::Init();
     Service::PTM::Init();
     Service::HID::Init();
+    Service::I2C::Init();
     Service::IR::Init();
+    Service::MCU::Init();
 
     AddService(new AC_U::Interface);
     AddService(new ACT_U::Interface);
@@ -153,9 +159,12 @@ void Init() {
 
 /// Shutdown ServiceManager
 void Shutdown() {
+    Service::MCU::Shutdown();
     Service::IR::Shutdown();
+    Service::I2C::Shutdown();
     Service::HID::Shutdown();
     Service::PTM::Shutdown();
+    Service::PDN::Shutdown();
     Service::APT::Shutdown();
     Service::CFG::Shutdown();
     Service::FS::ArchiveShutdown();

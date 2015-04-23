@@ -647,7 +647,7 @@ static void SetPriority(Service::Interface* self) {
 
     cmd_buff[1] = RESULT_SUCCESS.raw;
 
-    LOG_DEBUG(Service_FS, "called priority=0x%08X", priority);
+    LOG_DEBUG(Service_FS, "called priority=0x%X", priority);
 }
 
 /**
@@ -666,7 +666,7 @@ static void GetPriority(Service::Interface* self) {
     cmd_buff[1] = RESULT_SUCCESS.raw;
     cmd_buff[2] = priority;
 
-    LOG_DEBUG(Service_FS, "called priority=0x%08X", priority);
+    LOG_DEBUG(Service_FS, "called priority=0x%X", priority);
 }
 
 const Interface::FunctionInfo FunctionTable[] = {
