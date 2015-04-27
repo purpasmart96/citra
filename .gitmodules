@@ -7,3 +7,6 @@
 [submodule "externals/nihstro"]
 	path = externals/nihstro
 	url = https://github.com/neobrain/nihstro.git
+[submodule "externals/polarssl"]
+	path = externals/polarssl
+	url = https://github.com/purpasmart96/polarssl.git
